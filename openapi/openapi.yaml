@@ -4,20 +4,22 @@ info:
   version: "0.1.0"
 servers:
   - url: "https://api.example.edu/api/v1"
-  description: "Production"
+    description: "Production"
 
 paths:
   /health:
-    get :
+    get:
       summary: "Health check"
-      description:"服務是否正常"
-      security:
-      responses :
-        "200" :
+      description: "服務是否正常" 
+      security: []
+      responses:
+        "200":
           description: "OK"
           content:
             application/json:
               schema:
                 type: object
                 properties:
-                  status: ( type: string, example:"ok" 
+                  status:
+                    type: string
+                    example: "ok"
