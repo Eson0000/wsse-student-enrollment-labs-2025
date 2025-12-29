@@ -3,9 +3,9 @@ info:
   title: "Hello API"
   version: "0.1.0"
 
-# 全域安全要求：預設所有端點都需要 ApiKeyAuth
+# 全域預設要求身分驗證
 security:
-  - ApiKeyAuth: []
+  - CognitoAuth: []
 
 tags:
   - name: health
@@ -23,7 +23,7 @@ paths:
       tags:
         - health
       summary: "Health check"
-      # 覆寫全域設定：此端點允許匿名存取
+      # 覆寫全域設定：此端點允許匿名存取，不需驗證
       security: [] 
       responses:
         "200":
@@ -53,7 +53,6 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
 
-    # 新增 POST 方法：建立學生
     post:
       summary: "Create student"
       tags:
@@ -68,6 +67,7 @@ paths:
               ok:
                 value: { id: 101, name: "Ann" }
       responses:
+        # 遵循 REST 規範：建立成功回傳 201 並包含 Location Header
         "201":
           description: "Created"
           headers:
@@ -83,12 +83,13 @@ paths:
                 $ref: "#/components/schemas/Error"
 
 components:
-  # 安全方案定義
+  # 將 ApiKey 替換為符合 Cognito 規範的 OAuth2/OpenID Connect 結構
   securitySchemes:
-    ApiKeyAuth:
+    CognitoAuth:
       type: apiKey
       in: header
-      name: X-API-Key
+      name: Authorization
+      description: "請輸入 'Bearer <ID_Token>'"
 
   schemas:
     Student:
