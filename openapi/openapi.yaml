@@ -2,6 +2,17 @@ openapi: "3.0.0"
 info:
   title: "Hello API"
   version: "0.1.0"
+
+# 全域安全要求：預設所有端點都需要 ApiKeyAuth
+security:
+  - ApiKeyAuth: []
+
+tags:
+  - name: health
+    description: "服務健康檢查"
+  - name: student
+    description: "學生資料管理"
+
 servers:
   - url: "https://api.example.edu/api/v1"
     description: "Production"
@@ -9,9 +20,20 @@ servers:
 paths:
   /health:
     get:
+      tags:
+        - health
       summary: "Health check"
-      description: "服務是否正常" 
-      security: []
+      # 覆寫全域設定：此端點允許匿名存取
+      security: [] 
+      responses:
+        "200":
+          description: "OK"
+
+  /students:
+    get:
+      summary: "List students"
+      tags:
+        - student
       responses:
         "200":
           description: "OK"
@@ -20,6 +42,72 @@ paths:
               schema:
                 type: object
                 properties:
-                  status:
-                    type: string
-                    example: "ok"
+                  items:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Student"
+        "500":
+          description: "Server Error"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+    # 新增 POST 方法：建立學生
+    post:
+      summary: "Create student"
+      tags:
+        - student
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Student"
+            examples:
+              ok:
+                value: { id: 101, name: "Ann" }
+      responses:
+        "201":
+          description: "Created"
+          headers:
+            Location:
+              description: "新資源 URL (例如 /api/v1/students/101)"
+              schema:
+                type: string
+        "500":
+          description: "Server Error"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+components:
+  # 安全方案定義
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+
+  schemas:
+    Student:
+      type: object
+      required: [id, name]
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+          minLength: 1
+
+    Error:
+      type: object
+      required: [code, message]
+      properties:
+        code:
+          type: string
+          example: "ERR_NOT_FOUND"
+        message:
+          type: string
