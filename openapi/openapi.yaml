@@ -1,96 +1,21 @@
 openapi: "3.0.0"
+
 info:
   title: "Hello API"
   version: "0.1.0"
 
-# 全域預設要求身分驗證
-security:
-  - CognitoAuth: []
-
 tags:
   - name: health
     description: "服務健康檢查"
-  - name: student
-    description: "學生資料管理"
+    externalDocs:
+      description: "本課程手冊"
+      url: "https://example.edu/wsse/handbook"
 
 servers:
   - url: "https://api.example.edu/api/v1"
     description: "Production"
 
-paths:
-  /health:
-    get:
-      tags:
-        - health
-      summary: "Health check"
-      # 覆寫全域設定：此端點允許匿名存取，不需驗證
-      security: [] 
-      responses:
-        "200":
-          description: "OK"
-
-  /students:
-    get:
-      summary: "List students"
-      tags:
-        - student
-      responses:
-        "200":
-          description: "OK"
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  items:
-                    type: array
-                    items:
-                      $ref: "#/components/schemas/Student"
-        "500":
-          description: "Server Error"
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-
-    post:
-      summary: "Create student"
-      tags:
-        - student
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/Student"
-            examples:
-              ok:
-                value: { id: 101, name: "Ann" }
-      responses:
-        # 遵循 REST 規範：建立成功回傳 201 並包含 Location Header
-        "201":
-          description: "Created"
-          headers:
-            Location:
-              description: "新資源 URL (例如 /api/v1/students/101)"
-              schema:
-                type: string
-        "500":
-          description: "Server Error"
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-
 components:
-  # 將 ApiKey 替換為符合 Cognito 規範的 OAuth2/OpenID Connect 結構
-  securitySchemes:
-    CognitoAuth:
-      type: apiKey
-      in: header
-      name: Authorization
-      description: "請輸入 'Bearer <ID_Token>'"
-
   schemas:
     Student:
       type: object
@@ -112,3 +37,75 @@ components:
           example: "ERR_NOT_FOUND"
         message:
           type: string
+
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+
+security:
+  - ApiKeyAuth: []
+
+paths:
+  /health:
+    get:
+      summary: "Health check"
+      description: "服務是否正常"
+      tags: [health]
+      security: []
+      responses:
+        "200":
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "ok"
+
+  /students:
+    get:
+      summary: "List students"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Student"
+        "500":
+          description: "Server Error"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+    post:
+      summary: "Create student"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Student"
+            examples:
+              ok:
+                value:
+                  id: 101
+                  name: "Ann"
+      responses:
+        "201":
+          description: "Created"
+          headers:
+            Location:
+              description: "新資源 URL（例如 /api/v1/students/101）"
+              schema:
+                type: string
